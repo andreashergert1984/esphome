@@ -6,7 +6,7 @@ from esphome.const import (
     ICON_EMPTY,
     CONF_VAILLANT_X6_ID,
 )
-from . import PipsolarComponent
+from . import Vaillant_X6Component
 
 DEPENDENCIES = ["uart"]
 
@@ -15,10 +15,10 @@ vaillant_x6_sensor_ns = cg.esphome_ns.namespace("vaillant_x6sensor")
 CONFIG_SCHEMA = cv.Schema(
     {
         cv.GenerateID(): cv.declare_id(vaillant_x6_sensor_ns),
-        cv.Required(CONF_PIPSOLAR_ID): cv.use_id(PipsolarComponent),
+        cv.Required(CONF_VAILLANT_X6_ID): cv.use_id(Vaillant_X6Component),
     }
 )
 
 
 def to_code(config):
-    paren = yield cg.get_variable(config[CONF_PIPSOLAR_ID])
+    paren = yield cg.get_variable(config[CONF_VAILLANT_X6_ID])
