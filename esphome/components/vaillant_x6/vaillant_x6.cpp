@@ -96,7 +96,7 @@ void Vaillant_x6::loop() {
   //     // crc ok
   //     this->state_ = STATE_POLL_CHECKED;
   //     return;
-  //   } else {
+  //   } else { 
   //     this->state_ = STATE_IDLE;
   //   }
   // }
