@@ -20,10 +20,9 @@ from esphome.const import (
 )
 from .. import VAILLANT_X6_COMPONENT_SCHEMA, CONF_VAILLANT_X6_ID
 
-DEPENDENCIES = ["uart"]
-
 # known sensors
 CONF_STORAGE_TEMPERATURE = "storage_temperature"
+CONF_FORERUN_TEMPERATURE = "forerun_temperature"
 
 COMMANDS = {
     CONF_STORAGE_TEMPERATURE: {
@@ -32,12 +31,22 @@ COMMANDS = {
         'response_length' : 6,
         'data_length': 2,
         'has_status': True
-    }
+    },
+    CONF_FORERUN_TEMPERATURE: {
+        'command': 0x18,
+        'data_type': 'float',
+        'response_length' : 6,
+        'data_length': 2,
+        'has_status': True
+    },
 }
 
 
 TYPES = {
     CONF_STORAGE_TEMPERATURE: sensor.sensor_schema(
+        UNIT_CELSIUS, ICON_THERMOMETER, 1, DEVICE_CLASS_TEMPERATURE
+    ),
+    CONF_FORERUN_TEMPERATURE: sensor.sensor_schema(
         UNIT_CELSIUS, ICON_THERMOMETER, 1, DEVICE_CLASS_TEMPERATURE
     ),
 }
@@ -54,4 +63,4 @@ async def to_code(config):
         if type in config:
             conf = config[type]
             sens = await sensor.new_sensor(conf)
-            cg.add(paren.addSensor(sens,COMMANDS[type]['command'],COMMANDS[type]['data_type'],COMMANDS[type]['response_length'],COMMANDS[type]['data_length'],COMMANDS[type]['has_status']))
+            cg.add(paren.addSensor(sens,COMMANDS[type]['command'],COMMANDS[type]['data_type'],COMMANDS[type]['response_length'],COMMANDS[type]['data_length'],COMMANDS[type]['has_status'],type))
