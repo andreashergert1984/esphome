@@ -8,8 +8,24 @@ static const char *TAG = "vaillant_x6";
 
 void Vaillant_x6::setup() {
   this->state_ = STATE_IDLE;
-  // this->command_start_millis_ = 0;
+  this->command_start_millis_ = 0;
 }
+
+uint8_t Vaillant_x6::calcchecksum(std::vector<uint8_t> command) {
+    uint8_t checksum = 0;
+        for (auto b: command) {
+            if (checksum & 0x80) {
+                checksum = (checksum << 1 | 1) & 0xFF;
+                checksum = checksum ^ 0x18;
+
+            } else {
+                checksum = checksum << 1;   
+            }
+            checksum = checksum ^ b;
+        }
+    return checksum;
+}
+
 
 void Vaillant_x6::empty_uart_buffer_() {
   uint8_t byte;
@@ -18,13 +34,28 @@ void Vaillant_x6::empty_uart_buffer_() {
   }
 }
 
-void Vaillant_x6::addSensor(sensor::Sensor *sens, uint8_t command, std::string data_type, uint8_t response_length,
+
+void Vaillant_x6::addSensor(sensor::Sensor *sens, uint8_t command, uint8_t data_type, uint8_t response_length,
                             uint8_t data_length, bool has_status, std::string name) {
   Vaillant_X6_Command new_command;
   new_command.command = command;
   new_command.data_type = data_type;
   new_command.has_status = has_status;
   new_command.sens = sens;
+  new_command.binary_sens = NULL;
+  new_command.response_length = response_length;
+  new_command.data_length = data_length;
+  new_command.name = name;
+  this->used_polling_commands.push_back(new_command);
+}
+void Vaillant_x6::addBinarySensor(binary_sensor::BinarySensor *sens, uint8_t command, uint8_t data_type, uint8_t response_length,
+                            uint8_t data_length, bool has_status, std::string name) {
+  Vaillant_X6_Command new_command;
+  new_command.command = command;
+  new_command.data_type = data_type;
+  new_command.has_status = has_status;
+  new_command.binary_sens = sens;
+  new_command.sens = NULL;
   new_command.response_length = response_length;
   new_command.data_length = data_length;
   new_command.name = name;
@@ -79,43 +110,118 @@ void Vaillant_x6::loop() {
   //   // }
   // }
 
-  // if (this->state_ == STATE_POLL_DECODED) {
-  // }
+  if (this->state_ == STATE_POLL_DECODED) {
+    Vaillant_X6_Command cur = this->used_polling_commands.at(this->last_polling_command_);
+    if (cur.has_status) {
+      switch (sensorstate_) {
+        case OK:
+          if (cur.sens) { cur.sens->publish_state(fvalue_); }
+          if (cur.binary_sens) { cur.binary_sens->publish_state(bvalue_); }
 
-  // if (this->state_ == STATE_POLL_CHECKED) {
-  //   return;
-  // }
+          break;
+        case SHORT:
+          // TODO
+          break;
+        case INTERRUPTED:
+          // TODO
+          break;
+      }
 
-  // if (this->state_ == STATE_POLL_COMPLETE) {
-  //   if (this->check_incoming_crc_()) {
-  //     if (this->read_buffer_[0] == '(' && this->read_buffer_[1] == 'N' && this->read_buffer_[2] == 'A' &&
-  //         this->read_buffer_[3] == 'K') {
-  //       this->state_ = STATE_IDLE;
-  //       return;
-  //     }
-  //     // crc ok
-  //     this->state_ = STATE_POLL_CHECKED;
-  //     return;
-  //   } else { 
-  //     this->state_ = STATE_IDLE;
-  //   }
-  // }
+    } else {
+          if (cur.sens) { cur.sens->publish_state(fvalue_); }
+          if (cur.binary_sens) { cur.binary_sens->publish_state(bvalue_); }
+    }
+    this->state_ = STATE_IDLE;
+
+  }
+
+  if (this->state_ == STATE_POLL_CHECKED) {
+    //decode the response
+    Vaillant_X6_Command cur = this->used_polling_commands.at(this->last_polling_command_);
+    size_t used_bytes = 2;  // length and unknown second byte ;)
+    switch (cur.data_type) {
+      case FLOAT:
+        if (cur.data_length == 1)
+        {
+          if (read_buffer.size() >= 2) {
+            used_bytes = 3;
+            int16_t shift_value = read_buffer.at(2);
+            fvalue_ = shift_value;
+          }
+        }
+        if (cur.data_length == 2)
+        {
+          if (read_buffer.size() >= 3) {
+            used_bytes = 4;
+            int16_t shift_value = read_buffer.at(2) << 8 | read_buffer.at(3);
+            fvalue_ = shift_value / 16.0f;
+          }
+        }
+        break;
+      case INT:
+        break;
+      case BOOL:
+          if (read_buffer.size()>2) {
+            used_bytes = 3;
+            switch (read_buffer.at(2)) {
+              case 0x00:
+              case 0xF0:
+                bvalue_ = false;
+                break;
+              case 0x0F:
+              case 0x01:
+                bvalue_ = true;
+                break;
+            }
+          }
+        break;
+    }
+    if (cur.has_status) {
+      if (read_buffer.size() >= used_bytes) {}
+      switch (read_buffer.at(used_bytes)) {
+        case 0x00:
+          // OK
+          sensorstate_ = OK;
+          break;
+        case 0x55:
+          // short
+          sensorstate_ = SHORT;
+          break;
+        case 0xAA:
+          // interrupted
+          sensorstate_ = INTERRUPTED;
+          break;
+      }
+    }
+
+    this->state_ = STATE_POLL_DECODED;
+    return;
+  }
+
+  if (this->state_ == STATE_POLL_COMPLETE) {
+    if (this->check_incoming_length_() && this->check_incoming_checksum_()) {
+      // if (this->read_buffer_[0] == '(' && this->read_buffer_[1] == 'N' && this->read_buffer_[2] == 'A' &&
+      //     this->read_buffer_[3] == 'K') {
+      //   this->state_ = STATE_IDLE;
+      //   return;
+      // }
+      // crc ok
+      this->state_ = STATE_POLL_CHECKED;
+      return;
+    } else { 
+      this->state_ = STATE_IDLE;
+    }
+  }
 
   if (this->state_ == STATE_COMMAND || this->state_ == STATE_POLL) {
     while (this->available()) {
       uint8_t byte;
       this->read_byte(&byte);
-
-      if (this->read_pos_ == VAILLANT_X6_READ_BUFFER_LENGTH) {
-        this->read_pos_ = 0;
-        this->empty_uart_buffer_();
-      }
-      this->read_buffer_[this->read_pos_] = byte;
-      this->read_pos_++;
+      read_buffer.push_back(byte);
+      ESP_LOGD(TAG, "got byte: 0x%02x need %d have %d",byte,used_polling_commands.at(last_polling_command_).response_length,read_buffer.size());
 
       // end of answer
-      if (byte == 0x0D) {
-        this->read_buffer_[this->read_pos_] = 0;
+      if (read_buffer.size() == used_polling_commands.at(last_polling_command_).response_length) {
         this->empty_uart_buffer_();
         if (this->state_ == STATE_POLL) {
           this->state_ = STATE_POLL_COMPLETE;
@@ -150,74 +256,61 @@ void Vaillant_x6::loop() {
   }
 }
 
-// uint8_t Vaillant_x6::check_incoming_length_(uint8_t length) {
-//   if (this->read_pos_ - 3 == length) {
-//     return 1;
-//   }
-//   return 0;
-// }
+uint8_t Vaillant_x6::check_incoming_length_() {
+  ESP_LOGD(TAG, "checking length on incoming message");
+  if (read_buffer.at(0) == read_buffer.size()) {
+    ESP_LOGD(TAG, "length OK on incoming message");
+    return 1;
+  }
+  ESP_LOGD(TAG, "length FAILED on incoming message");
 
-// uint8_t Vaillant_x6::check_incoming_crc_() {
-//   // uint16_t crc16;
-//   // crc16 = calc_crc_(read_buffer_, read_pos_ - 3);
-//   // ESP_LOGD(TAG, "checking crc on incoming message");
-//   // if (((uint8_t) ((crc16) >> 8)) == read_buffer_[read_pos_ - 3] &&
-//   //     ((uint8_t) ((crc16) &0xff)) == read_buffer_[read_pos_ - 2]) {
-//   //   ESP_LOGD(TAG, "CRC OK");
-//   //   read_buffer_[read_pos_ - 1] = 0;
-//   //   read_buffer_[read_pos_ - 2] = 0;
-//   //   read_buffer_[read_pos_ - 3] = 0;
-//   //   return 1;
-//   // }
-//   // ESP_LOGD(TAG, "CRC NOK expected: %X %X but got: %X %X", ((uint8_t) ((crc16) >> 8)), ((uint8_t) ((crc16) &0xff)),
-//   //          read_buffer_[read_pos_ - 3], read_buffer_[read_pos_ - 2]);
-//   return 0;
-// }
+  return 0;
+}
+
+uint8_t Vaillant_x6::check_incoming_checksum_() {
+  // TODO: Checksum
+  ESP_LOGD(TAG, "checking checksum on incoming message");
+  uint8_t checksum = this->read_buffer.back();
+  this->read_buffer.pop_back();
+  uint8_t should_checksum = this->calcchecksum(read_buffer);
+  this->read_buffer.push_back(checksum);
+  if (should_checksum == checksum) {
+    ESP_LOGD(TAG, "CRC OK");
+    return 1;
+  }
+  ESP_LOGD(TAG, "CRC NOK ");
+  return 0;
+}
 
 // send next command used
 uint8_t Vaillant_x6::send_next_command_() {
-  // uint16_t crc16;
   if (this->command_queue_[this->command_queue_position_].length() != 0) {
-    //   const char* command = this->command_queue_[this->command_queue_position_].c_str();
-    //   uint8_t byte_command[16];
-    //   uint8_t length = this->command_queue_[this->command_queue_position_].length();
-    //   for (uint8_t i = 0; i < length; i++) {
-    //     byte_command[i] = (uint8_t) this->command_queue_[this->command_queue_position_].at(i);
-    //   }
-    //   this->state_ = STATE_COMMAND;
-    //   this->command_start_millis_ = millis();
-    //   this->empty_uart_buffer_();
-    //   this->read_pos_ = 0;
-    //   crc16 = calc_crc_(byte_command, length);
-    //   this->write_str(command);
-    //   // checksum
-    //   this->write(((uint8_t) ((crc16) >> 8)));   // highbyte
-    //   this->write(((uint8_t) ((crc16) &0xff)));  // lowbyte
-    //   // end Byte
-    //   this->write(0x0D);
-    //   ESP_LOGD(TAG, "Sending command from queue: %s with length %d", command, length);
+    // commands not yet implemented as doc is missing
     return 1;
   }
   return 0;
 }
 
 void Vaillant_x6::send_next_poll_() {
-  // uint16_t crc16;
   this->last_polling_command_ = (this->last_polling_command_ + 1) % this->used_polling_commands.size();
   this->state_ = STATE_POLL;
   this->command_start_millis_ = millis();
   this->empty_uart_buffer_();
-  this->read_pos_ = 0;
+  std::vector<uint8_t>().swap(read_buffer);
+
+  // this->read_pos_ = 0;
   Vaillant_X6_Command cur = this->used_polling_commands.at(this->last_polling_command_);
-  // crc16 = calc_crc_(this->used_polling_commands_[this->last_polling_command_].command,
-  //                   this->used_polling_commands_[this->last_polling_command_].length);
-  // this->write_array(this->used_polling_commands_[this->last_polling_command_].command,
-  //                   this->used_polling_commands_[this->last_polling_command_].length);
-  // // checksum
-  // this->write(((uint8_t) ((crc16) >> 8)));   // highbyte
-  // this->write(((uint8_t) ((crc16) &0xff)));  // lowbyte
-  // // end Byte
-  // this->write(0x0D);
+  std::vector<uint8_t> commandpackage;
+  commandpackage.push_back(0x07); // first byte is always 0x07
+  commandpackage.push_back(0x00); // second byte is always 0x00
+  commandpackage.push_back(0x00); // third byte is always 0x00
+  commandpackage.push_back(0x00); // fourth byte is always 0x00
+  commandpackage.push_back(cur.command);  //the actual command
+  commandpackage.push_back(cur.response_length);  //the expected response length
+  commandpackage.push_back(this->calcchecksum(commandpackage)); //ending with the checksum
+  for (auto cbyte: commandpackage) {
+    this->write(cbyte);
+  }
   ESP_LOGD(TAG, "Sending polling command : %s with length %d", cur.name.c_str(), cur.data_length);
 }
 

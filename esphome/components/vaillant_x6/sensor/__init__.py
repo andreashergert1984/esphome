@@ -27,14 +27,14 @@ CONF_FORERUN_TEMPERATURE = "forerun_temperature"
 COMMANDS = {
     CONF_STORAGE_TEMPERATURE: {
         'command': 0x17,
-        'data_type': 'float',
+        'data_type': 2,
         'response_length' : 6,
         'data_length': 2,
         'has_status': True
     },
     CONF_FORERUN_TEMPERATURE: {
         'command': 0x18,
-        'data_type': 'float',
+        'data_type': 2,
         'response_length' : 6,
         'data_length': 2,
         'has_status': True
