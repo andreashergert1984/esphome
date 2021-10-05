@@ -159,6 +159,9 @@ void Vaillant_x6::loop() {
         }
         break;
       case INT:
+        if (read_buffer.size()>2) {
+          fvalue_ = read_buffer.at(2);
+        }
         break;
       case BOOL:
           if (read_buffer.size()>2) {

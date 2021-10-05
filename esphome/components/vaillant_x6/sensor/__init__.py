@@ -4,12 +4,15 @@ from esphome.components import sensor
 from esphome.const import (
     DEVICE_CLASS_EMPTY,
     DEVICE_CLASS_TEMPERATURE,
+    DEVICE_CLASS_TIMESTAMP,
     DEVICE_CLASS_VOLTAGE,
     ICON_EMPTY,
     ICON_THERMOMETER,
+    ICON_TIMER,
     UNIT_AMPERE,
     UNIT_CELSIUS,
     UNIT_HERTZ,
+    UNIT_MINUTE,
     UNIT_PERCENT,
     UNIT_VOLT,
     UNIT_EMPTY,
@@ -23,6 +26,7 @@ from .. import VAILLANT_X6_COMPONENT_SCHEMA, CONF_VAILLANT_X6_ID
 # known sensors
 CONF_STORAGE_TEMPERATURE = "storage_temperature"
 CONF_FORERUN_TEMPERATURE = "forerun_temperature"
+CONF_BURNER_LOCK_TIME_LEFT = "burner_lock_time_left"
 
 COMMANDS = {
     CONF_STORAGE_TEMPERATURE: {
@@ -39,6 +43,13 @@ COMMANDS = {
         'data_length': 2,
         'has_status': True
     },
+    CONF_BURNER_LOCK_TIME_LEFT: {
+        'command': 0x38,
+        'data_type': 1,
+        'response_length' : 4,
+        'data_length': 1,
+        'has_status': False
+    },
 }
 
 
@@ -48,6 +59,9 @@ TYPES = {
     ),
     CONF_FORERUN_TEMPERATURE: sensor.sensor_schema(
         UNIT_CELSIUS, ICON_THERMOMETER, 1, DEVICE_CLASS_TEMPERATURE
+    ),
+    CONF_BURNER_LOCK_TIME_LEFT: sensor.sensor_schema(
+        UNIT_MINUTE, ICON_TIMER, 1, DEVICE_CLASS_EMPTY
     ),
 }
 
