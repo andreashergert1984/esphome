@@ -12,20 +12,19 @@ void Vaillant_x6::setup() {
 }
 
 uint8_t Vaillant_x6::calcchecksum(std::vector<uint8_t> command) {
-    uint8_t checksum = 0;
-        for (auto b: command) {
-            if (checksum & 0x80) {
-                checksum = (checksum << 1 | 1) & 0xFF;
-                checksum = checksum ^ 0x18;
+  uint8_t checksum = 0;
+  for (auto b : command) {
+    if (checksum & 0x80) {
+      checksum = (checksum << 1 | 1) & 0xFF;
+      checksum = checksum ^ 0x18;
 
-            } else {
-                checksum = checksum << 1;   
-            }
-            checksum = checksum ^ b;
-        }
-    return checksum;
+    } else {
+      checksum = checksum << 1;
+    }
+    checksum = checksum ^ b;
+  }
+  return checksum;
 }
-
 
 void Vaillant_x6::empty_uart_buffer_() {
   uint8_t byte;
@@ -33,7 +32,6 @@ void Vaillant_x6::empty_uart_buffer_() {
     this->read_byte(&byte);
   }
 }
-
 
 void Vaillant_x6::addSensor(sensor::Sensor *sens, uint8_t command, uint8_t data_type, uint8_t response_length,
                             uint8_t data_length, bool has_status, std::string name) {
@@ -48,8 +46,8 @@ void Vaillant_x6::addSensor(sensor::Sensor *sens, uint8_t command, uint8_t data_
   new_command.name = name;
   this->used_polling_commands.push_back(new_command);
 }
-void Vaillant_x6::addBinarySensor(binary_sensor::BinarySensor *sens, uint8_t command, uint8_t data_type, uint8_t response_length,
-                            uint8_t data_length, bool has_status, std::string name) {
+void Vaillant_x6::addBinarySensor(binary_sensor::BinarySensor *sens, uint8_t command, uint8_t data_type,
+                                  uint8_t response_length, uint8_t data_length, bool has_status, std::string name) {
   Vaillant_X6_Command new_command;
   new_command.command = command;
   new_command.data_type = data_type;
@@ -115,8 +113,12 @@ void Vaillant_x6::loop() {
     if (cur.has_status) {
       switch (sensorstate_) {
         case OK:
-          if (cur.sens) { cur.sens->publish_state(fvalue_); }
-          if (cur.binary_sens) { cur.binary_sens->publish_state(bvalue_); }
+          if (cur.sens) {
+            cur.sens->publish_state(fvalue_);
+          }
+          if (cur.binary_sens) {
+            cur.binary_sens->publish_state(bvalue_);
+          }
 
           break;
         case SHORT:
@@ -128,29 +130,30 @@ void Vaillant_x6::loop() {
       }
 
     } else {
-          if (cur.sens) { cur.sens->publish_state(fvalue_); }
-          if (cur.binary_sens) { cur.binary_sens->publish_state(bvalue_); }
+      if (cur.sens) {
+        cur.sens->publish_state(fvalue_);
+      }
+      if (cur.binary_sens) {
+        cur.binary_sens->publish_state(bvalue_);
+      }
     }
     this->state_ = STATE_IDLE;
-
   }
 
   if (this->state_ == STATE_POLL_CHECKED) {
-    //decode the response
+    // decode the response
     Vaillant_X6_Command cur = this->used_polling_commands.at(this->last_polling_command_);
     size_t used_bytes = 2;  // length and unknown second byte ;)
     switch (cur.data_type) {
       case FLOAT:
-        if (cur.data_length == 1)
-        {
+        if (cur.data_length == 1) {
           if (read_buffer.size() >= 2) {
             used_bytes = 3;
             int16_t shift_value = read_buffer.at(2);
             fvalue_ = shift_value;
           }
         }
-        if (cur.data_length == 2)
-        {
+        if (cur.data_length == 2) {
           if (read_buffer.size() >= 3) {
             used_bytes = 4;
             int16_t shift_value = read_buffer.at(2) << 8 | read_buffer.at(3);
@@ -159,28 +162,29 @@ void Vaillant_x6::loop() {
         }
         break;
       case INT:
-        if (read_buffer.size()>2) {
+        if (read_buffer.size() > 2) {
           fvalue_ = read_buffer.at(2);
         }
         break;
       case BOOL:
-          if (read_buffer.size()>2) {
-            used_bytes = 3;
-            switch (read_buffer.at(2)) {
-              case 0x00:
-              case 0xF0:
-                bvalue_ = false;
-                break;
-              case 0x0F:
-              case 0x01:
-                bvalue_ = true;
-                break;
-            }
+        if (read_buffer.size() > 2) {
+          used_bytes = 3;
+          switch (read_buffer.at(2)) {
+            case 0x00:
+            case 0xF0:
+              bvalue_ = false;
+              break;
+            case 0x0F:
+            case 0x01:
+              bvalue_ = true;
+              break;
           }
+        }
         break;
     }
     if (cur.has_status) {
-      if (read_buffer.size() >= used_bytes) {}
+      if (read_buffer.size() >= used_bytes) {
+      }
       switch (read_buffer.at(used_bytes)) {
         case 0x00:
           // OK
@@ -211,7 +215,7 @@ void Vaillant_x6::loop() {
       // crc ok
       this->state_ = STATE_POLL_CHECKED;
       return;
-    } else { 
+    } else {
       this->state_ = STATE_IDLE;
     }
   }
@@ -221,7 +225,8 @@ void Vaillant_x6::loop() {
       uint8_t byte;
       this->read_byte(&byte);
       read_buffer.push_back(byte);
-      ESP_LOGD(TAG, "got byte: 0x%02x need %d have %d",byte,used_polling_commands.at(last_polling_command_).response_length,read_buffer.size());
+      ESP_LOGD(TAG, "got byte: 0x%02x need %d have %d", byte,
+               used_polling_commands.at(last_polling_command_).response_length, read_buffer.size());
 
       // end of answer
       if (read_buffer.size() == used_polling_commands.at(last_polling_command_).response_length) {
@@ -304,14 +309,14 @@ void Vaillant_x6::send_next_poll_() {
   // this->read_pos_ = 0;
   Vaillant_X6_Command cur = this->used_polling_commands.at(this->last_polling_command_);
   std::vector<uint8_t> commandpackage;
-  commandpackage.push_back(0x07); // first byte is always 0x07
-  commandpackage.push_back(0x00); // second byte is always 0x00
-  commandpackage.push_back(0x00); // third byte is always 0x00
-  commandpackage.push_back(0x00); // fourth byte is always 0x00
-  commandpackage.push_back(cur.command);  //the actual command
-  commandpackage.push_back(cur.response_length);  //the expected response length
-  commandpackage.push_back(this->calcchecksum(commandpackage)); //ending with the checksum
-  for (auto cbyte: commandpackage) {
+  commandpackage.push_back(0x07);                                // first byte is always 0x07
+  commandpackage.push_back(0x00);                                // second byte is always 0x00
+  commandpackage.push_back(0x00);                                // third byte is always 0x00
+  commandpackage.push_back(0x00);                                // fourth byte is always 0x00
+  commandpackage.push_back(cur.command);                         // the actual command
+  commandpackage.push_back(cur.response_length);                 // the expected response length
+  commandpackage.push_back(this->calcchecksum(commandpackage));  // ending with the checksum
+  for (auto cbyte : commandpackage) {
     this->write(cbyte);
   }
   ESP_LOGD(TAG, "Sending polling command : %s with length %d", cur.name.c_str(), cur.data_length);

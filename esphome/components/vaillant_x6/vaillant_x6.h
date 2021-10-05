@@ -22,10 +22,10 @@ struct Vaillant_X6_Command {
 
 class Vaillant_x6 : public uart::UARTDevice, public PollingComponent {
  public:
-  void addSensor(sensor::Sensor *sens, uint8_t command, uint8_t data_type, uint8_t response_length,
-                 uint8_t data_length, bool has_status, std::string name);
+  void addSensor(sensor::Sensor *sens, uint8_t command, uint8_t data_type, uint8_t response_length, uint8_t data_length,
+                 bool has_status, std::string name);
   void addBinarySensor(binary_sensor::BinarySensor *sens, uint8_t command, uint8_t data_type, uint8_t response_length,
-                 uint8_t data_length, bool has_status, std::string name);
+                       uint8_t data_length, bool has_status, std::string name);
   //  void switch_command(std::string command);
   void setup() override;
   void loop() override;
@@ -55,13 +55,9 @@ class Vaillant_x6 : public uart::UARTDevice, public PollingComponent {
   uint32_t command_start_millis_ = 0;
   float fvalue_ = 0;
   bool bvalue_ = false;
-  uint8_t sensorstate_ = 0; //OK
+  uint8_t sensorstate_ = 0;  // OK
   uint8_t state_;
-  enum Sensor_State {
-    OK = 0,
-    SHORT = 1,
-    INTERRUPTED = 2
-  };
+  enum Sensor_State { OK = 0, SHORT = 1, INTERRUPTED = 2 };
   enum State {
     STATE_IDLE = 0,
     STATE_POLL = 1,
