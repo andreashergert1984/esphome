@@ -37,6 +37,10 @@ void Mega2560FanServoController::setup() {
 
 void Mega2560FanServoController::dump_config() {
   ESP_LOGCONFIG(TAG, "Mega2560FanServoController:");
+
+  for (auto channel = 0; channel < 4; channel++) {
+    ESP_LOGCONFIG(TAG, "PWM Channel %d Setup to %dHz", channel, this->pwm_frequency_[channel]);
+  }
   // ESP_LOGCONFIG(TAG, "  Mode: 0x%02X", this->mode_);
   // ESP_LOGCONFIG(TAG, "  Frequency: %.0f Hz", this->frequency_);
   if (this->is_failed()) {
@@ -46,6 +50,9 @@ void Mega2560FanServoController::dump_config() {
 
 void Mega2560FanServoController::write_pwm(uint8_t channel, uint8_t port, float speed) {
   this->pwm_amounts_[channel * 3 + port] = (uint8_t) (speed * 255.0f);
+  if (!this->write_byte(0x10 + channel * 3 + port, this->pwm_amounts_[channel * 3 + port])) {
+    this->mark_failed();
+  }
 }
 
 void Mega2560FanServoController::loop() {}
