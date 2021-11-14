@@ -5,10 +5,13 @@ esphome:
   board: d1_mini
   build_path: build/test3
   on_boot:
-    - wait_until:
-        - api.connected
-        - wifi.connected
-        - time.has_time
+    - if:
+        condition:
+          - api.connected
+          - wifi.connected
+          - time.has_time
+        then:
+          - logger.log: "Have time"
   includes:
     - custom.h
 
@@ -247,6 +250,10 @@ uart:
     tx_pin: GPIO4
     rx_pin: GPIO5
     baud_rate: 9600
+  - id: uart7
+    tx_pin: GPIO4
+    rx_pin: GPIO5
+    baud_rate: 38400
 
 modbus:
   uart_id: uart1
@@ -261,7 +268,7 @@ logger:
   level: DEBUG
   esp8266_store_log_strings_in_flash: true
 
-web_server:
+improv_serial:
 
 deep_sleep:
   run_duration: 20s
@@ -402,7 +409,7 @@ sensor:
       name: Illuminance
     color_temperature:
       name: Color Temperature
-    integration_time: 700ms
+    integration_time: 614ms
     gain: 60x
   - platform: custom
     lambda: |-
@@ -548,6 +555,18 @@ sensor:
       name: 'PMS Humidity'
     formaldehyde:
       name: 'PMS Formaldehyde Concentration'
+  - platform: cse7761
+    uart_id: uart7
+    voltage:
+      name: 'CSE7761 Voltage'
+    current_1:
+      name: 'CSE7761 Current 1'
+    current_2:
+      name: 'CSE7761 Current 2'
+    active_power_1:
+      name: 'CSE7761 Active Power 1'
+    active_power_2:
+      name: 'CSE7761 Active Power 2'
   - platform: cse7766
     uart_id: uart3
     voltage:
@@ -1092,10 +1111,6 @@ output:
       return {s};
     outputs:
       - id: custom_float
-  - platform: ac_dimmer
-    id: dimmer1
-    gate_pin: GPIO5
-    zero_cross_pin: GPIO12
   - platform: slow_pwm
     pin: GPIO5
     id: my_slow_pwm
@@ -1153,7 +1168,7 @@ servo:
 ttp229_lsf:
 
 ttp229_bsf:
-  sdo_pin: D0
+  sdo_pin: D2
   scl_pin: D1
 
 sim800l:
@@ -1297,4 +1312,3 @@ dsmr:
 daly_bms:
   update_interval: 20s
   uart_id: uart1
-

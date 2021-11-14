@@ -61,6 +61,12 @@ mcp3008:
   - id: 'mcp3008_hub'
     cs_pin: GPIO12
 
+output:
+  - platform: ac_dimmer
+    id: dimmer1
+    gate_pin: GPIO5
+    zero_cross_pin: GPIO12
+
 sensor:
   - platform: homeassistant
     entity_id: sensor.hello_world
@@ -395,6 +401,11 @@ ble_client:
 
 airthings_ble:
 
+ruuvi_ble:
+
+xiaomi_ble:
+
+
 #esp32_ble_beacon:
 #  type: iBeacon
 #  uuid: 'c29ce823-e67a-4e71-bff2-abaa32e77a98'
@@ -493,3 +504,9 @@ interval:
 
 display:
 
+cap1188:
+  id: cap1188_component
+  address: 0x29
+  touch_threshold: 0x20
+  allow_multiple_touches: true
+  reset_pin: 14
