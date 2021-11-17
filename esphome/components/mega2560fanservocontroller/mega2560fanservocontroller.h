@@ -13,7 +13,8 @@ class Mega2560FanServoControllerSensor;
 class Mega2560FanServoController : public PollingComponent, public i2c::I2CDevice {
  public:
   // void register_channel(PCA9685Channel *channel);
-  void set_pwm_channel(uint8_t channel, uint16_t speed) { this->pwm_frequency_[channel] = speed; }
+  void set_pwm_channel(uint8_t channel, uint16_t speed) { this->pwm_frequency_[channel % 12] = speed; }
+  void enable_pwm_port(uint8_t channel, uint8_t port) { this->pwm_port_enabled_[(channel * 3 + port) % 12] = true; }
   void write_pwm(uint8_t channel, uint8_t port, float speed);
   void register_rpm_sensor(Mega2560FanServoControllerSensor *sens){
 
@@ -26,6 +27,7 @@ class Mega2560FanServoController : public PollingComponent, public i2c::I2CDevic
 
  protected:
   uint16_t pwm_frequency_[4] = {0};
+  bool pwm_port_enabled_[12] = {false};
   uint8_t pwm_amounts_[12] = {
       0,
   };

@@ -41,3 +41,4 @@ async def to_code(config):
     cg.add(var.set_parent(parent))
     cg.add(var.set_channel(config[CONF_CHANNEL]))
     cg.add(var.set_port(config[CONF_PORT]))
+    cg.add(parent.enable_pwm_port(config[CONF_CHANNEL],config[CONF_PORT]))

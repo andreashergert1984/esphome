@@ -15,7 +15,7 @@ static const uint8_t PCA9685_REGISTER_LED0 = 0x06;
 static const uint8_t PCA9685_REGISTER_PRE_SCALE = 0xFE;
 
 void Mega2560FanServoController::setup() {
-  ESP_LOGCONFIG(TAG, "Setting up Mega2560FanServoControllerComponent...");
+  ESP_LOGD(TAG, "Setting up Mega2560FanServoControllerComponent...");
 
   // ESP_LOGV(TAG, "  Resetting devices...");
   // if (!this->write_bytes(PCA9685_REGISTER_SOFTWARE_RESET, nullptr, 0)) {
@@ -31,6 +31,38 @@ void Mega2560FanServoController::setup() {
   //   this->mark_failed();
   //   return;
   // }
+
+  //
+  // PWM Output :
+  // Timer1 Address : 0x01
+  // Timer3 Address : 0x02
+  // Timer4 Address : 0x03
+  // Timer5 Address : 0x04
+
+  // Timer Bytes :
+  // 0 : Enabled
+  // 1 : 50Hz Output Enabled(prio)
+  // 2 : 25kHz Output Enabled
+  // 3 : Port A Enabled
+  // 4 : Port B Enabled
+  // 5 : Port C Enabled
+  // 6 : not used
+  // 7 : not used
+
+  ESP_LOGD(TAG, "Setting up all timers for Output");
+  for (auto channel = 0; channel < 4; channel++) {
+    ESP_LOGD(TAG, "Setting up all timers for Output %d", channel);
+    uint8_t channelconfig = 0;  // all off
+    if (this->pwm_frequency_[channel] == 50) {
+      channelconfig |= (1 << 1);
+    }  // Set 50Hz Mode
+    if (this->pwm_frequency_[channel] == 25000) {
+      channelconfig |= (1 << 2);
+    }  // Set 25000Hz Mode
+    // enable needed outputs
+    channelconfig |= (this->pwm_port_enabled_[channel * 3] << 3) & (this->pwm_port_enabled_[channel * 3 + 1] << 4) &
+                     (this->pwm_port_enabled_[channel * 3 + 2] << 5);
+  }
 
   this->loop();
 }
