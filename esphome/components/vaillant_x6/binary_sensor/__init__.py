@@ -12,6 +12,8 @@ from .. import VAILLANT_X6_COMPONENT_SCHEMA, CONF_VAILLANT_X6_ID
 # known sensors
 CONF_INTERNAL_PUMP = "internal_pump"
 CONF_EXTERNAL_PUMP = "external_pump"
+CONF_FLAME_SIGNAL = "flame_signal"
+CONF_PRIORITYSWITCHINGVALVE = "priorityswitchingvalve"
 
 COMMANDS = {
     CONF_INTERNAL_PUMP: {
@@ -28,12 +30,29 @@ COMMANDS = {
         'data_length': 1,
         'has_status': 0,
     },
+    CONF_FLAME_SIGNAL: {
+        'command': 0x05,
+        'data_type': 0,
+        'response_length' : 4,
+        'data_length': 2,
+        'has_status': 1,
+    },
+    CONF_PRIORITYSWITCHINGVALVE: {
+        'command': 0x42,
+        'data_type': 0,
+        'response_length' : 4,
+        'data_length': 2,
+        'has_status': 1,
+    }
+
 }
 
 
 TYPES = {
     CONF_INTERNAL_PUMP,
     CONF_EXTERNAL_PUMP,
+    CONF_FLAME_SIGNAL,
+    CONF_PRIORITYSWITCHINGVALVE,
 }
 
 CONFIG_SCHEMA = VAILLANT_X6_COMPONENT_SCHEMA.extend(
