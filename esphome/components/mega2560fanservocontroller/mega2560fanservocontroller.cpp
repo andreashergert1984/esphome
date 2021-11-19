@@ -33,26 +33,51 @@ void Mega2560FanServoController::setup() {
   // 6 : not used
   // 7 : not used
 
+  this->update_config();
+
+  this->loop();
+}
+
+void Mega2560FanServoController::update_config() {
   ESP_LOGD(TAG, "Setting up all timers for Output");
   for (uint8_t channel = 0; channel < 4; channel++) {
     ESP_LOGD(TAG, "Setting up all timers for Output %d", channel);
     uint8_t channelconfig = 0;  // all off
     if (this->pwm_frequency_[channel] == 50) {
+      channelconfig = 1;
       channelconfig |= (1 << 1);
     }  // Set 50Hz Mode
     if (this->pwm_frequency_[channel] == 25000) {
+      channelconfig = 1;
       channelconfig |= (1 << 2);
     }  // Set 25000Hz Mode
     // enable needed outputs
-    channelconfig |= (this->pwm_port_enabled_[channel * 3] << 3) & (this->pwm_port_enabled_[channel * 3 + 1] << 4) &
-                     (this->pwm_port_enabled_[channel * 3 + 2] << 5);
-    uint8_t req_register = 0x00 + channel;
+    ESP_LOGD(TAG, "Setting up all timers for Output %d enable port 0: %d", channel,
+             this->pwm_port_enabled_[channel * 3]);
+    ESP_LOGD(TAG, "Setting up all timers for Output %d enable port 1: %d", channel,
+             this->pwm_port_enabled_[channel * 3 + 1]);
+    ESP_LOGD(TAG, "Setting up all timers for Output %d enable port 2: %d", channel,
+             this->pwm_port_enabled_[channel * 3 + 2]);
+
+    if (this->pwm_port_enabled_[channel * 3]) {
+      channelconfig += 8;
+    }
+    if (this->pwm_port_enabled_[channel * 3 + 1]) {
+      channelconfig += 16;
+    }
+    if (this->pwm_port_enabled_[channel * 3 + 1]) {
+      channelconfig += 32;
+    }
+    // channelconfig |= ((this->pwm_port_enabled_[channel * 3] ? 1 : 0) << 3) &
+    //                  (this->pwm_port_enabled_[channel * 3 + 1] << 4) & (this->pwm_port_enabled_[channel * 3 + 2] <<
+    //                  5);
+    uint8_t req_register = 0x01 + channel;
+    ESP_LOGD(TAG, "Setting up all timers for Output %d mode: 0x%02x", channel, channelconfig);
+
     if (!this->write_byte(req_register, channelconfig)) {
       //      this->mark_failed();
     }
   }
-
-  this->loop();
 }
 
 void Mega2560FanServoController::dump_config() {
