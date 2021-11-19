@@ -16,22 +16,6 @@ static const uint8_t PCA9685_REGISTER_PRE_SCALE = 0xFE;
 
 void Mega2560FanServoController::setup() {
   ESP_LOGD(TAG, "Setting up Mega2560FanServoControllerComponent...");
-
-  // ESP_LOGV(TAG, "  Resetting devices...");
-  // if (!this->write_bytes(PCA9685_REGISTER_SOFTWARE_RESET, nullptr, 0)) {
-  //   this->mark_failed();
-  //   return;
-  // }
-
-  // if (!this->write_byte(PCA9685_REGISTER_MODE1, PCA9685_MODE1_RESTART | PCA9685_MODE1_AUTOINC)) {
-  //   this->mark_failed();
-  //   return;
-  // }
-  // if (!this->write_byte(PCA9685_REGISTER_MODE2, this->mode_)) {
-  //   this->mark_failed();
-  //   return;
-  // }
-
   //
   // PWM Output :
   // Timer1 Address : 0x01
@@ -50,7 +34,7 @@ void Mega2560FanServoController::setup() {
   // 7 : not used
 
   ESP_LOGD(TAG, "Setting up all timers for Output");
-  for (auto channel = 0; channel < 4; channel++) {
+  for (uint8_t channel = 0; channel < 4; channel++) {
     ESP_LOGD(TAG, "Setting up all timers for Output %d", channel);
     uint8_t channelconfig = 0;  // all off
     if (this->pwm_frequency_[channel] == 50) {
@@ -62,13 +46,17 @@ void Mega2560FanServoController::setup() {
     // enable needed outputs
     channelconfig |= (this->pwm_port_enabled_[channel * 3] << 3) & (this->pwm_port_enabled_[channel * 3 + 1] << 4) &
                      (this->pwm_port_enabled_[channel * 3 + 2] << 5);
+    uint8_t req_register = 0x00 + channel;
+    if (!this->write_byte(req_register, channelconfig)) {
+      //      this->mark_failed();
+    }
   }
 
   this->loop();
 }
 
 void Mega2560FanServoController::dump_config() {
-  ESP_LOGCONFIG(TAG, "Mega2560FanServoController:");
+  ESP_LOGCONFIG(TAG, "Mega2560FanServoController dingens:");
 
   for (auto channel = 0; channel < 4; channel++) {
     ESP_LOGCONFIG(TAG, "PWM Channel %d Setup to %dHz", channel, this->pwm_frequency_[channel]);
@@ -76,14 +64,16 @@ void Mega2560FanServoController::dump_config() {
   // ESP_LOGCONFIG(TAG, "  Mode: 0x%02X", this->mode_);
   // ESP_LOGCONFIG(TAG, "  Frequency: %.0f Hz", this->frequency_);
   if (this->is_failed()) {
-    ESP_LOGE(TAG, "Setting up Mega2560FanServoController failed!");
+    ESP_LOGCONFIG(TAG, "Setting up Mega2560FanServoController failed!");
   }
 }
 
 void Mega2560FanServoController::write_pwm(uint8_t channel, uint8_t port, float speed) {
   this->pwm_amounts_[channel * 3 + port] = (uint8_t) (speed * 255.0f);
+  ESP_LOGD(TAG, "Setting Output %d", channel * 3 + port);
+
   if (!this->write_byte(0x10 + channel * 3 + port, this->pwm_amounts_[channel * 3 + port])) {
-    this->mark_failed();
+    //    this->mark_failed();
   }
 }
 
