@@ -27,8 +27,8 @@ CONFIG_SCHEMA = cv.All(
         {
             cv.GenerateID(CONF_MEGA2560FANSERVOCONTROLLER_ID): cv.use_id(Mega2560fanservocontrollerComponent),
             cv.GenerateID(): cv.declare_id(Mega2560fanservocontrollerOutput),
-            cv.Required(CONF_CHANNEL): cv.int_range(min=0, max=4),
-            cv.Required(CONF_PORT): cv.int_range(min=0, max=3),
+            cv.Required(CONF_CHANNEL): cv.int_range(min=0, max=3),
+            cv.Required(CONF_PORT): cv.int_range(min=0, max=2),
         }
     ),
 )

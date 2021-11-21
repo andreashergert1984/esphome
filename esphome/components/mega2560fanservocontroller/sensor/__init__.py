@@ -29,8 +29,8 @@ CONFIG_SCHEMA = cv.All(
         {
             cv.GenerateID(CONF_MEGA2560FANSERVOCONTROLLER_ID): cv.use_id(Mega2560fanservocontrollerComponent),
             cv.GenerateID(): cv.declare_id(Mega2560fanservocontrollerSensor),
-            cv.Required(CONF_CHANNEL): cv.int_range(min=0, max=4),
-            cv.Required(CONF_PORT): cv.int_range(min=0, max=3),
+            cv.Required(CONF_CHANNEL): cv.int_range(min=0, max=3),
+            cv.Required(CONF_PORT): cv.int_range(min=0, max=2),
             cv.Optional(CONF_SAMPLE_TIME,default = 60): cv.positive_time_period_seconds,
         }
     )
@@ -38,11 +38,12 @@ CONFIG_SCHEMA = cv.All(
 
 
 async def to_code(config):
-    var = cg.new_Pvariable(config[CONF_ID])
+#    var = cg.new_Pvariable(config[CONF_ID])
+    var = await sensor.new_sensor(config)
     await sensor.register_sensor(var, config)
     parent = await cg.get_variable(config[CONF_MEGA2560FANSERVOCONTROLLER_ID])
     cg.add(var.set_parent(parent))
     cg.add(var.set_channel(config[CONF_CHANNEL]))
     cg.add(var.set_port(config[CONF_PORT]))
     cg.add(var.set_sample_time(config[CONF_SAMPLE_TIME]))
-    cg.add(parent.register_rpm_sensor(var))
+    cg.add(parent.register_rpm_sensor(config[CONF_CHANNEL],config[CONF_PORT],var))
