@@ -9,7 +9,7 @@ namespace mega2560fanservocontroller {
 static const char *const TAG = "Mega2560FanServoController.sensor";
 
 void Mega2560FanServoControllerSensor::update() {
-  if (millis() - this->last_update_millis_ > (this->sample_time_ * 1000)) {
+  if (millis() - this->last_update_millis_ > (this->update_interval_ * 1000)) {
     this->last_update_millis_ = millis();
     ESP_LOGD(TAG, "update");
 
