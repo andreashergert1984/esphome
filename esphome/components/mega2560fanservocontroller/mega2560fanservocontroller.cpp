@@ -100,6 +100,13 @@ void Mega2560FanServoController::write_pwm(uint8_t channel, uint8_t port, float 
   }
 }
 
+uint16_t Mega2560FanServoController::get_rpm(uint8_t channel, uint8_t port) {
+  uint16_t rpmsread = 0;
+  if (!this->read_bytes_16(0x30 + channel * 3 + port, &rpmsread, 1)) {
+    //    this->mark_failed();
+  }
+  return rpmsread;
+}
 void Mega2560FanServoController::loop() {}
 
 void Mega2560FanServoController::update() {}

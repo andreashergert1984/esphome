@@ -23,6 +23,8 @@ class Mega2560FanServoController : public PollingComponent, public i2c::I2CDevic
   void register_rpm_sensor(uint8_t channel, uint8_t port, Mega2560FanServoControllerSensor *sens) {
     this->rpm_sensors[(channel * 3 + port) % 12] = sens;
   };
+  uint16_t get_rpm(uint8_t channel, uint8_t port);
+
   void setup() override;
   void dump_config() override;
   float get_setup_priority() const override { return setup_priority::HARDWARE; }
