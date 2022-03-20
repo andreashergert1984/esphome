@@ -10,6 +10,7 @@ DEPENDENCIES = ["uart"]
 
 CODEOWNERS = ["@andreashergert1984"]
 CONF_OPTIONSMAP = "optionsmap"
+CONF_STATUSMAP = "statusmap"
 
 CONF_OUTPUT_SOURCE_PRIORITY = "output_source_priority"
 
@@ -81,7 +82,8 @@ TYPES = {
 PIPSELECT_SCHEMA = select.SELECT_SCHEMA.extend(
     {
         cv.GenerateID(): cv.declare_id(PipsolarSelect),
-        cv.Required(CONF_OPTIONSMAP): ensure_option_map(),
+        cv.Optional(CONF_OPTIONSMAP): ensure_option_map(),
+        cv.Optional(CONF_STATUSMAP): ensure_option_map(),
     }
 ).extend(cv.COMPONENT_SCHEMA)
 
@@ -100,9 +102,14 @@ async def to_code(config):
             var = cg.new_Pvariable(conf[CONF_ID])
             await cg.register_component(var, conf)
             await select.register_select(var, conf, options=list(options_map.keys()))
+            cg.add(getattr(paren, f"set_{type}_select")(var))
             cg.add(var.set_parent(paren))
             for mappingkey in options_map.keys():
                 cg.add(var.add_mapping(mappingkey,options_map[mappingkey]))
+            if CONF_STATUSMAP in conf:
+                status_map = conf[CONF_STATUSMAP]
+                for mappingkey in status_map.keys():
+                    cg.add(var.add_status_mapping(mappingkey,status_map[mappingkey]))
             # cg.add(var.set_optimistic(conf[CONF_OPTIMISTIC]))
 
 # async def to_code(config):
