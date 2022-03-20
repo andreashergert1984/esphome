@@ -101,6 +101,8 @@ async def to_code(config):
             await cg.register_component(var, conf)
             await select.register_select(var, conf, options=list(options_map.keys()))
             cg.add(var.set_parent(paren))
+            for mappingkey in options_map.keys():
+                cg.add(var.add_mapping(mappingkey,options_map[mappingkey]))
             # cg.add(var.set_optimistic(conf[CONF_OPTIMISTIC]))
 
 # async def to_code(config):
