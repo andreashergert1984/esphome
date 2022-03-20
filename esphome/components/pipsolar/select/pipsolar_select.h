@@ -1,6 +1,7 @@
 #pragma once
 
 #include <utility>
+#include <map>
 
 #include "esphome/components/pipsolar/pipsolar.h"
 #include "esphome/components/select/select.h"

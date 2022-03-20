@@ -4,6 +4,7 @@
 #include "esphome/components/sensor/sensor.h"
 #include "esphome/components/switch/switch.h"
 #include "esphome/components/select/select.h"
+#include "esphome/components/pipsolar/select/pipsolar_select.h"
 #include "esphome/components/text_sensor/text_sensor.h"
 #include "esphome/components/uart/uart.h"
 #include "esphome/core/automation.h"
@@ -11,6 +12,7 @@
 
 namespace esphome {
 namespace pipsolar {
+class PipsolarSelect;
 
 enum ENUMPollingCommand {
   POLLING_QPIRI = 0,
@@ -46,7 +48,7 @@ struct PollingCommand {
 #define PIPSOLAR_SENSOR(name, polling_command, value_type) \
   PIPSOLAR_VALUED_ENTITY_(sensor::Sensor, name, polling_command, value_type)
 #define PIPSOLAR_SWITCH(name, polling_command) PIPSOLAR_ENTITY_(switch_::Switch, name, polling_command)
-#define PIPSOLAR_SELECT(name, polling_command) PIPSOLAR_ENTITY_(select::Select, name, polling_command)
+#define PIPSOLAR_SELECT(name, polling_command) PIPSOLAR_ENTITY_(pipsolar::PipsolarSelect, name, polling_command)
 #define PIPSOLAR_BINARY_SENSOR(name, polling_command, value_type) \
   PIPSOLAR_VALUED_ENTITY_(binary_sensor::BinarySensor, name, polling_command, value_type)
 #define PIPSOLAR_VALUED_TEXT_SENSOR(name, polling_command, value_type) \
