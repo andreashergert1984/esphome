@@ -86,10 +86,10 @@ void DalyBmsComponent::decode_data_(std::vector<uint8_t> data) {
         switch (it[2]) {
           case DALY_REQUEST_EQUILIBRIUM:
             //A5:01:97:08:00:01:00:00:00:00:00:00:46
-            ESP_LOGD(TAG, "EQUILIBRIUM in %#",it[4])
-            ESP_LOGD(TAG, "EQUILIBRIUM in %#",it[5])
-            ESP_LOGD(TAG, "EQUILIBRIUM in %#",it[6])
-            ESP_LOGD(TAG, "EQUILIBRIUM in %#",it[7])
+            ESP_LOGD(TAG, "EQUILIBRIUM in %#",it[4]);
+            ESP_LOGD(TAG, "EQUILIBRIUM in %#",it[5]);
+            ESP_LOGD(TAG, "EQUILIBRIUM in %#",it[6]);
+            ESP_LOGD(TAG, "EQUILIBRIUM in %#",it[7]);
             break;
           case DALY_REQUEST_BATTERY_LEVEL:
             if (this->voltage_sensor_) {
