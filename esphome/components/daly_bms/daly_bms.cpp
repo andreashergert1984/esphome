@@ -33,7 +33,7 @@ void DalyBmsComponent::update() {
   this->request_data_(DALY_REQUEST_MIN_MAX_TEMPERATURE);
   this->request_data_(DALY_REQUEST_MOS);
   this->request_data_(DALY_REQUEST_STATUS);
-//  this->request_data_(DALY_REQUEST_CELL_VOLTAGE);
+  this->request_data_(DALY_REQUEST_CELL_VOLTAGE);
   this->request_data_(DALY_REQUEST_TEMPERATURE);
   this->request_data_(DALY_REQUEST_EQUILIBRIUM);
 
@@ -134,6 +134,7 @@ void DalyBmsComponent::decode_data_(std::vector<uint8_t> data) {
             break;
 
           case DALY_REQUEST_MOS:
+            ESP_LOGD(TAG, "got MOS STATUS");
             if (this->status_text_sensor_ != nullptr) {
               switch (it[4]) {
                 case 0:
