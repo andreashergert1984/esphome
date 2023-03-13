@@ -86,6 +86,10 @@ void DalyBmsComponent::decode_data_(std::vector<uint8_t> data) {
 
       if (checksum == it[12]) {
         switch (it[2]) {
+          case DALY_REQUEST_BATTERY_STATUS:
+            ESP_LOGD(TAG, "got BS");
+
+            break;
           case DALY_REQUEST_EQUILIBRIUM:
             //A5:01:97:08:00:01:00:00:00:00:00:00:46
             ESP_LOGD(TAG, "EQUILIBRIUM in %#",it[4]);
@@ -136,7 +140,6 @@ void DalyBmsComponent::decode_data_(std::vector<uint8_t> data) {
             break;
 
           case DALY_REQUEST_MOS:
-            ESP_LOGD(TAG, "got MOS STATUS");
             if (this->status_text_sensor_ != nullptr) {
               switch (it[4]) {
                 case 0:
