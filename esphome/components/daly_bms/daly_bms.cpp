@@ -18,6 +18,7 @@ static const uint8_t DALY_REQUEST_MOS = 0x93;
 static const uint8_t DALY_REQUEST_STATUS = 0x94;
 static const uint8_t DALY_REQUEST_CELL_VOLTAGE = 0x95;
 static const uint8_t DALY_REQUEST_TEMPERATURE = 0x96;
+static const uint8_t DALY_REQUEST_EQUILIBRIUM = 0x97;
 
 void DalyBmsComponent::setup() {}
 
@@ -34,6 +35,7 @@ void DalyBmsComponent::update() {
   this->request_data_(DALY_REQUEST_STATUS);
   this->request_data_(DALY_REQUEST_CELL_VOLTAGE);
   this->request_data_(DALY_REQUEST_TEMPERATURE);
+  this->request_data_(DALY_REQUEST_EQUILIBRIUM);
 
   std::vector<uint8_t> get_battery_level_data;
   int available_data = this->available();
